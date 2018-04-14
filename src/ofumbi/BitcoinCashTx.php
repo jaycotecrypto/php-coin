@@ -1,6 +1,6 @@
 <?php
 namespace ofumbi;
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use Btccom\BitcoinCash\Address\AddressCreator;
 //use \BitWasp\Bitcoin\Address\AddressCreator;
 use Btccom\BitcoinCash\Transaction\Factory\Checker\CheckerCreator as BitcoinCashCheckerCreator;

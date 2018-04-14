@@ -4,7 +4,7 @@ use ofumbi\Api\Provider;
 use \BitWasp\Bitcoin\Network\Network;
 use phpseclib\Math\BigInteger;
 use ofumbi\Api\ApiInterface;
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 
 class Api 
 {

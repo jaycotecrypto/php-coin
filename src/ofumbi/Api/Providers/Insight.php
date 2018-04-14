@@ -23,7 +23,7 @@ class Insight extends Provider implements ApiInterface
 	}
 	
 	public function addressTx(array $addresses=[], $blocks = []){
-		$adrs = $addresses instanceof Tightenco\Collect\Support\Collection? $addresses->pluck('addresss'):$addresses;
+		$adrs = $addresses instanceof Illuminate\Support\Collection? $addresses->pluck('addresss'):$addresses;
 		$endpoint = "addrs/".implode(',',$adrs)."/txs";
 		$from = 0;
 		$to = 50;

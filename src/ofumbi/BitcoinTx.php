@@ -1,6 +1,6 @@
 <?php
 namespace ofumbi;
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use \BitWasp\Bitcoin\Address\AddressCreator;
 
 class BitcoinTx

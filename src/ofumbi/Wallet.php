@@ -1,6 +1,6 @@
 <?php
 namespace ofumbi;
-Tightenco\Collect\Support\Collection;
+Illuminate\Support\Collection;
 
 class Wallet
 {
