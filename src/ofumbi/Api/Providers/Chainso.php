@@ -14,7 +14,8 @@ class Chainso extends Provider implements ApiInterface
     }
 	
 	private function validate($request){
-		if($request->status = "fail") {
+		
+		if($request->status == "fail") {
 			$msg =  "An Error Ocurred";
 			foreach ($request->data as $k=>$v)
 			$msg .= $k.":".$v;
@@ -27,11 +28,11 @@ class Chainso extends Provider implements ApiInterface
 		$return = [];
 		foreach($addresses as $address){
 			$utxo = $this->get_unspent($address);
-			if(count($utxo->data->txs)< 1)continue;
-			foreach($utxo->data->txs as $utx  ){
+			if(count($utxo->txs) < 1)continue;
+			foreach($utxo->txs as $utx  ){
 				if($utx->confirmations < $minconf)continue;
-				$o = new stdClass;
-				$o->address = $utxo->data->address;
+				$o = new \stdClass;
+				$o->address = $utxo->address;
 				$o->txid = $utx->txid;
 				$o->vout = $utx->output_no;
 				$o->scriptPubKey = $utx->script_hex;
@@ -39,14 +40,15 @@ class Chainso extends Provider implements ApiInterface
 				$o->satoshis = $this->toSatoshi($utx->value);
 				$o->confirmations = $utx->confirmations;
 				$o->ts = $utx->time;
-				$return[$address] = $o;
+				$return[] = $o;
 			}
 		}
+		return $return;
 		
 	}
 	
 	private function get_unspent($address){
-		$endpoint = "/get_tx_unspent/{$this->coin}/".$address;
+		$endpoint = "get_tx_unspent/{$this->coin}/".$address;
 		$request = $this->httpRequest($endpoint);
 		return $this->validate($request);
 	}
@@ -56,7 +58,7 @@ class Chainso extends Provider implements ApiInterface
 	}
 	
 	public function sendrawtransaction( $hexRawTx ){
-		$endpoint = "/send_tx/{$this->coin}/".$hexRawTx;
+		$endpoint = "send_tx/{$this->coin}/".$hexRawTx;
 		$request = $this->httpRequest($endpoint);
 		return $this->validate($request)->txid;
 	}
@@ -66,13 +68,15 @@ class Chainso extends Provider implements ApiInterface
 		$valid = [];
 		foreach($blocks as $blck){
 			$block = $this->getBlock($blck);
+			die(var_dump($block));
 			foreach($block->txs as $tx){
 				$vout  = collect($tx->outputs);
 				$vin  = collect($tx->inputs);
 				$all_from = $vin->pluck('address');
-				$all_to = $vout->pluck('addresses');
+				$all_to = $vout->pluck('address');
 				$mine_from = $all_from->intersect($addresses);
 				$mine_to = $all_to->intersect($addresses);
+				
 				if($mine_from->count()){
 					$btx = new \ofumbi\BTX;
 					$btx->from = $mine_from;
@@ -81,7 +85,7 @@ class Chainso extends Provider implements ApiInterface
 					$btx->hash = $tx->txid ;
 					$btx->fee = $tx->fee;
 					$btx->amount = $this->toSatoshi($vin->whereIn('address', $mine_from)->sum('value'));
-					$btx->confirmations = $block->confirmations;
+					$btx->confirmations = isset($block->confirmations)?$block->confirmations:0;
 					$btx->blockHeight = $block->block_no;
 					$valid[] = $btx;
 				}
@@ -89,22 +93,22 @@ class Chainso extends Provider implements ApiInterface
 				if($mine_to->count()){
 					$btx = new \ofumbi\BTX;
 					$btx->from = $all_from;
-					$btx->type = 'send'; 
+					$btx->type = 'receive'; 
 					$btx->to = $mine_to;
 					$btx->fee = $tx->fee;
-					$btx->hash = $btx->to = $mine_to;
-					$btx->amount = $this->toSatoshi($vout->whereIn('address', $mine_to)->sum('valueSat'));
-					$btx->confirmations = $tx->confirmations;
-					$btx->blockHeight = $tx->blockheight;
+					$btx->hash = $tx->txid;
+					$btx->amount = $this->toSatoshi($vout->whereIn('address', $mine_to)->sum('value'));
+					$btx->confirmations = isset($block->confirmations)?$block->confirmations:0;
+					$btx->blockHeight = $block->block_no;
 					$valid[] = $btx;
 				}
-				
 			}
 		}
+		die(var_dump($valid));
 		return collect($valid);
 	}
 	public function getBlock($hash){
-		$endpoint = "/block/{$this->coin}/".$hash;
+		$endpoint = "block/{$this->coin}/".$hash;
 		$request = $this->httpRequest($endpoint); 
 		return $this->validate($request);
 	}
@@ -115,22 +119,22 @@ class Chainso extends Provider implements ApiInterface
 	
 	
 	public function getTx($hash){
-		$endpoint = "/get_tx/{$this->coin}/".$hash;
+		$endpoint = "get_tx/{$this->coin}/".$hash;
 		$request = $this->httpRequest($endpoint);
 		return $this->validate($request);
 	}
 	
 	public function currentBlock(){
-		$endpoint = "/get_info/{$this->coin}/";
+		$endpoint = "get_info/{$this->coin}/";
 		$request = $this->httpRequest($endpoint);
-		return $this->validate($request)->blocks;
+		return $this->validate($request);
 	}
 	
 	public function feePerKB(){
 		throw new Exception('SoChain Has No fees API');
 	}
 	
-	public function getBalance($minConf, array $addresses=[]){
+	public function getBalance($minconf, array $addresses=[]){
 		$balance = 0;
 		foreach($addresses as $address){
 			$utxo = $this->get_unspent($address);

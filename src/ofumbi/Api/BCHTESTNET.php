@@ -6,7 +6,7 @@ use BitWasp\Bitcoin\Network\NetworkFactory;
 use ofumbi\Api\ApiInterface;
 use \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash;
 use \Btccom\BitcoinCash\Transaction\SignatureHash\SigHash as BchSigHash;
-use \Btccom\BitcoinCash\Network\Networks\BitcoinCash;
+use \Btccom\BitcoinCash\Network\Networks\BitcoinCashTestnet;
 class BCH implements ApiInterface
 {
 	public $bip44index = '145';
@@ -20,17 +20,17 @@ class BCH implements ApiInterface
 			 $blockexplorer,
 			 $net;
 
-    public function __construct() 
+    public function __construct( $testnet = false ) 
     {
 		$this->net = $this->network();
-		$this->coinspace = new Insight('https://bch.coin.space/api/'); 
+		$this->coinspace = new Insight('https://bch.coin.space/api'); 
 		$this->bitcoin = new Insight('https://explorer.bitcoin.com/api/bch/');
-		$this->bitpay = new Insight('https://bch-insight.bitpay.com/api/');
-		$this->blockexplorer = new Insight('https://bitcoincash.blockexplorer.com/api/'); 
-		$this->blockdozer = new Insight('https://blockdozer.com/insight/api/'); 
-		$this->trezor1 = new Insight('https://bch-bitcore1.trezor.io/api/');   
-		$this->trezor2 = new Insight('https://bch-bitcore2.trezor.io/api/');	
-		$this->trezor3 = new Insight('https://bch-bitcore3.trezor.io/api/'); 
+		$this->bitpay = new Insight('https://bch-insight.bitpay.com/api');
+		$this->blockexplorer = new Insight('https://bitcoincash.blockexplorer.com/api'); 
+		$this->blockdozer = new Insight('https://blockdozer.com/insight/api'); 
+		$this->trezor1 = new Insight('https://bch-bitcore1.trezor.io/api');   
+		$this->trezor2 = new Insight('https://bch-bitcore2.trezor.io/api');	
+		$this->trezor3 = new Insight('https://bch-bitcore3.trezor.io/api'); 
 		
 	}
 	
@@ -45,14 +45,21 @@ class BCH implements ApiInterface
      */
     private function network()
     {
-        return new BitcoinCash();
+        return new BitcoinCashTestnet();
+    }
+
+    /**
+     * @return NetworkInterface
+     * @throws \Exception
+     */
+    private function testnet()
+    {
+        return new Networks\BitcoincashTestnet();
     }
 	
 	public function sigHash(){
-		return SigHash::BITCOINCASH | SigHash::ALL;
+		return BchSigHash::BITCOINCASH | SigHash::ALL;
 	}
-
-   
 
 	//chainso
 	public function addressTx(array $addresses=[], $blocks = []){
@@ -66,7 +73,7 @@ class BCH implements ApiInterface
 	
 	//trezor
 	public function getBalance($minConf, array $addresses=[]){
-		return $this->trezor2->getBalance($minConf, $addresses );
+		$this->trezor2->getBalance($minConf, $addresses );
 	}
 	
 	public function sendrawtransaction( $hexRawTx ){

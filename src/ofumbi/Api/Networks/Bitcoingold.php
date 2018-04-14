@@ -12,9 +12,9 @@ class Bitcoingold extends Network
      * @see Network::$base58PrefixMap
      */
      protected $base58PrefixMap = [
-        self::BASE58_ADDRESS_P2PKH => "39",
-        self::BASE58_ADDRESS_P2SH => "23",
-        self::BASE58_WIF => "128",
+        self::BASE58_ADDRESS_P2PKH => "26",
+        self::BASE58_ADDRESS_P2SH => "17",
+        self::BASE58_WIF => "80",
     ];
 
     /**

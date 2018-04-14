@@ -2,45 +2,41 @@
 namespace ofumbi\Api;
 use ofumbi\Api\Providers\Insight;
 use Graze\GuzzleHttp\JsonRpc\Client;
-
+use ofumbi\Api\ApiInterface;
 class ZEC implements ApiInterface
 {
+	public $bip44index = '133';
 	private  $blockexplorer ,  // api provider 
 			 $zcash ,  
 			 $trezor1, 
 			 $trezor2, 
-			 $trezor3;
+			 $trezor3,
+			 $net;
 
-    public function __construct( ) // well use varoius api to handle rate limmiting
+    public function __construct(  ) 
     {
-		$this->blockexplorer = new Insight('https://zcash.blockexplorer.com/api'); //
-		$this->zcash = new Insight('http://insight.mercerweiss.com/api');
-		$this->trezor1 = new Insight('https://zec-bitcore1.trezor.io/api');  //listunspent
-		$this->trezor2 = new Insight('https://zec-bitcore2.trezor.io/api');	// balance 
-		$this->trezor3 = new Insight('https://zec-bitcore3.trezor.io/api');  // pushT
+		$this->net =  $this->network();
+		$this->blockexplorer = new Insight('https://zcash.blockexplorer.com/api/'); //
+		$this->zcash = new Insight('http://insight.mercerweiss.com/api/');
+		$this->trezor1 = new Insight('https://zec-bitcore1.trezor.io/api/');  //listunspent
+		$this->trezor2 = new Insight('https://zec-bitcore2.trezor.io/api/');	// balance 
+		$this->trezor3 = new Insight('https://zec-bitcore3.trezor.io/api/');  // pushT
 	}
+	public function getNetwork(){
+		return $this->net;
+	}
+	
 	
 	 /**
      * @return NetworkInterface
      * @throws \Exception
      */
-    public static function network()
+    private function network()
     {
         return new Networks\Zcash();
-    }
-
-    /**
-     * @return NetworkInterface
-     * @throws \Exception
-     */
-    public static function testnet()
-    {
-        return new Networks\ZcashTestnet();
+		//return new Networks\ZcashTestnet();
     }
 	
-	public function network(){
-		return new Networks\Zcash();
-	}
 	
 	//bitpay
 	public function addressTx(array $addresses=[], $blocks = []){
@@ -53,7 +49,7 @@ class ZEC implements ApiInterface
 	}
 	
 	public function getBalance($minConf, array $addresses=[]){
-		$this->trezor2->getBalance($minConf, $addresses );
+		return $this->trezor2->getBalance($minConf, $addresses );
 	}
 	
 	public function importaddress($address,$wallet_name =null,$rescan =null){

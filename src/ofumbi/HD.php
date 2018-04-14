@@ -5,8 +5,10 @@ class HD{
 	
 	
 	
-	/* Wallet  bip44 format*/
-	public $bip44;
+	
+	public $bip44; /* Wallet  bip44 format*/
+	public $api; /* api object*/
+	public $network; /* Bitcoin network*/
 	/* Wallet  Private Key*/
 	private $xpriv;
 	/* Wallet  PrvteKey*/
@@ -15,8 +17,6 @@ class HD{
 	private $xpubKey;
 	/* Wallet  Public Key*/
 	private $xpub; 
-	/* Bitcoin network*/
-	private $network;
 	/* Wallet Password*/
 	private $password; 
 	/* Wallet  Master Private Key*/
@@ -25,21 +25,23 @@ class HD{
 	private $mnemonic;
 	/* Wallet  Master Private Key*/
 	private $master_xpub;
-	//etherscan.io
-	public $apiKey;
 	
-	function __construct( $network, string $bip44index = 0){
-		$this->network = $network;
-		$this->bip44 = "m/44'/".$bip44index."'/0'";
+	function __construct( \ofumbi\Api $api){
+		$this->api = $api;
+		$this->network = $api->network;
+		$this->bip44 = "m/44'/".$api->provider->bip44index."'/0'";
+		\BitWasp\Bitcoin\Bitcoin::setNetwork($this->network);
 	}
+	
 	
 	function getXpub(){
 		if(is_null($this->xpub))throw new Exception('xpub not set');
 		return $this->xpub;
 	}
-	function getXpub(){
-		if(is_null($this->xpub))throw new Exception('xpub not set');
-		return $this->xpub;
+	
+	function getXpubKey(){
+		if(is_null($this->xpubKey))throw new Exception('xpub not set');
+		return $this->xpubKey;
 	}
 		
  	function getMnemonic(){
@@ -51,6 +53,10 @@ class HD{
 		if(is_null($this->xpriv))throw new Exception('xpriv not set');
 		return $this->xpriv;
 	}
+	function getXprivKey(){
+		if(is_null($this->xprivKey))throw new Exception('xpriv not set');
+		return $this->xprivKey;
+	}
 	function getMasterXpriv(){
 		if(is_null($this->master_xpriv))throw new Exception('master_xpriv not set');
 		return $this->master_xpriv;
@@ -61,7 +67,7 @@ class HD{
 		return $this->password;
 	}
 
-	public function randomSeed( ){
+	public function randomSeed($password=null){
 		if(!is_null($password)){
 			$this->password = $password;
 		}
@@ -81,7 +87,7 @@ class HD{
 		}
 		$seed = $seedGenerator->getSeed($this->mnemonic, $this->password);
 		$master = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromEntropy($seed);
-		return $this->masterSeed($master->toExtendedPrivateKey());
+		return $this->masterSeed($master->toExtendedPrivateKey($this->network));
 	}
 	
 	public function recover($mnemonic, $password){
@@ -91,12 +97,13 @@ class HD{
 		$seedGenerator = new \BitWasp\Bitcoin\Mnemonic\Bip39\Bip39SeedGenerator($bip39);
 		$seed = $seedGenerator->getSeed($this->mnemonic, $this->password);
 		$master = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromEntropy($seed);
-		return $this->masterSeed($master->toExtendedPrivateKey);
+		
+		return $this->masterSeed($master->toExtendedPrivateKey($this->network));
 	}
 	
 	public function masterSeed($master){
 		//Master xpriv
-		$master = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($master);
+		$master = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($master,$this->network);
 		$master_xpriv = $master->toExtendedPrivateKey($this->network);
 		$this->master_xpriv = $master_xpriv;
 		$master_xpub = $master->toExtendedPublicKey($this->network); // path is master''
@@ -104,8 +111,8 @@ class HD{
 		$hardened = $master->derivePath($this->bip44);
 		$this->xpub = $hardened->toExtendedPublicKey($this->network);
 		$this->xpriv = $hardened->toExtendedPrivateKey($this->network);
-		$this->xpubKey = $hardened->getPublicKey();
-		$this->xprivKey = $hardened->getPrivateKey();;
+		$this->xpubKey = $hardened;
+		$this->xprivKey = $hardened;
 		return $this;
 	}
 	
@@ -114,8 +121,8 @@ class HD{
 		$this->xpriv = $xpriv;
 		$xpriv = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($xpriv);
 		$this->xpub = $xpriv->toExtendedPublicKey($this->network);
-		$this->xpubKey = $xpriv->getPublicKey();
-		$this->xprivKey = $xpriv->getPrivateKey();;
+		$this->xpubKey = $xpriv;
+		$this->xprivKey = $xpriv;
 		return $this;
 	}
 	
@@ -123,7 +130,7 @@ class HD{
 		//Master xpriv
 		$this->xpub = $xpub;
 		$key = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($this->xpub);
-		$this->xpubKey = $key->getPublicKey();
+		$this->xpubKey = $key;
 		return $this;
 	}
 	
@@ -138,16 +145,14 @@ class HD{
 		return $publicKey->getAddress()->getAddress($this->network);
 	}
 	
-	public function derive($index){
+	public function privateKey($index){
 		if(empty($this->xpriv))throw new \Exception('HD->derive($index) // Private Key is missing');
 		$key = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($this->xpriv);
 		if(strpos($index,'/')!==false)
-		$xriv = $key->derivePath($index);
+		$xpriv = $key->derivePath($index);
 		else
 		$xpriv = $key->deriveChild($index);
-		$this->xprivKey = $xpriv->getPrivateKey($this->network);
-		$this->xpubKey = $xpub->getPublicKey($this->network);
-		return $this;
+		return $xpriv;
 	}
 	
 	

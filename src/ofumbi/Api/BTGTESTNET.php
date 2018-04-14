@@ -4,7 +4,8 @@ use ofumbi\Api\Providers\Insight;
 use Graze\GuzzleHttp\JsonRpc\Client;
 use ofumbi\Api\ApiInterface;
 use \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash;
-class BTG implements ApiInterface
+use \Btccom\BitcoinCash\Transaction\SignatureHash\SigHash as BchSigHash;
+class BTGTESTNET implements ApiInterface
 {
 	public $bip44index = '156';
 	private  $btgexplorer ,  // api providers
@@ -14,18 +15,19 @@ class BTG implements ApiInterface
 			 $bitcoingold,
 			 $net;
 
-    public function __construct( $testnet = false ) 
+    public function __construct(   ) 
     {
-		$this->net = $testnet?$this->testnet():$this->network();
-		$this->bitcoingold = new Insight('https://explorer.bitcoingold.org/insight-api'); 
-		$this->btgexplorer = new Insight('https://btgexplorer.com/api'); 
-		$this->trezor1 = new Insight('https://btg-bitcore1.trezor.io/api');   
-		$this->trezor2 = new Insight('https://btg-bitcore2.trezor.io/api');	
-		$this->trezor3 = new Insight('https://btg-bitcore3.trezor.io/api'); 
-		
+		$this->net =  $this->network();
+		$this->bitcoingold = new Insight('https://test-explorer.bitcoingold.org/insight-api/'); 
 	}
+	
+	
 	public function getNetwork(){
 		return $this->net;
+	}
+	
+	public function sigHash(){
+		return SigHash::ALL | BchSigHash::BITCOINCASH;
 	}
 	
 	 /**
@@ -34,41 +36,31 @@ class BTG implements ApiInterface
      */
     private function network()
     {
-        return new Networks\Bitcoingold();
+		return new Networks\BitcoingoldTestnet();
     }
 
-    /**
-     * @return NetworkInterface
-     * @throws \Exception
-     */
-    public static function testnet()
-    {
-        return new Networks\BitcoingoldTestnet();
-    }
-	public function sigHash(){
-		return SigHash::ALL | SigHash::BITCOINCASH;
-	}
+   
 	//chainso
 	public function addressTx(array $addresses=[], $blocks = []){
-		return $this->trezor3->addressTx($addresses, $blocks);
+		return $this->bitcoingold->addressTx($addresses, $blocks);
 	}
 	
-	// dash
+	//dash
 	public function listunspent($minconf, array $addresses=[], $max = null){
 		return $this->bitcoingold->listunspent($minconf, $addresses, $max);
 	}
 	
 	//trezor
 	public function getBalance($minConf, array $addresses=[]){
-		$this->trezor2->getBalance($minConf, $addresses );
+		return $this->bitcoingold->getBalance($minConf, $addresses );
 	}
 	
 	public function sendrawtransaction( $hexRawTx ){
-		return $this->trezor3->sendrawtransaction( $hexRawTx );
+		return $this->bitcoingold->sendrawtransaction( $hexRawTx );
 	}
 	
 	public function getBlock($hash){
-		return $this->trezor1->getBlock($hash);
+		return $this->bitcoingold->getBlock($hash);
 	}
 	
 	public function getBlockByNumber($number){
@@ -76,15 +68,15 @@ class BTG implements ApiInterface
 	}
 	
 	public function getTx($hash){
-		return $this->btgexplorer->getTx($hash);
+		return $this->bitcoingold->getTx($hash);
 	}
 	
 	public function currentBlock(){
-		return $this->btgexplorer->currentBlock();
+		return $this->bitcoingold->currentBlock();
 	}
 	
 	public function feePerKB(){
-		return $this->trezor1->feePerKB();
+		return $this->bitcoingold->feePerKB();
 	}
 	//
 	public function importaddress($address,$wallet_name =null,$rescan =null){

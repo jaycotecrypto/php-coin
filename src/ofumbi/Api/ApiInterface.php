@@ -14,7 +14,6 @@ interface ApiInterface
 	public function getTx($Hash);
 	public function currentBlock();
 	public function feePerKB();
-	public function network();
-	public function testnet();
+	public function sigHash();
 	public function getBalance($minConf, array $addresses=[]);
 }

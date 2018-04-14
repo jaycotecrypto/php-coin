@@ -11,10 +11,10 @@ class BitcoingoldTestnet extends Network
      * {@inheritdoc}
      * @see Network::$base58PrefixMap
      */
-     protected $base58PrefixMap = [
-        self::BASE58_ADDRESS_P2PKH => "39",
-        self::BASE58_ADDRESS_P2SH => "23",
-        self::BASE58_WIF => "128",
+    protected $base58PrefixMap = [
+        self::BASE58_ADDRESS_P2PKH => "6f",
+        self::BASE58_ADDRESS_P2SH => "c4",
+        self::BASE58_WIF => "ef",
     ];
 
     /**

@@ -12,8 +12,8 @@ class Zcash extends Network
      * @see Network::$base58PrefixMap
      */
     protected $base58PrefixMap = [
-        self::BASE58_ADDRESS_P2PKH => "1cB8",
-        self::BASE58_ADDRESS_P2SH => "1cBD",
+        self::BASE58_ADDRESS_P2PKH => "1cb8",
+        self::BASE58_ADDRESS_P2SH => "1cbd",
         self::BASE58_WIF => "80",
 
     ];
@@ -23,8 +23,8 @@ class Zcash extends Network
      * @see Network::$bip32PrefixMap
      */
     protected $bip32PrefixMap = [
-        self::BIP32_PREFIX_XPUB => "0488B21E",
-        self::BIP32_PREFIX_XPRV => "0488ADE4",
+        self::BIP32_PREFIX_XPUB => "0488b21e",
+        self::BIP32_PREFIX_XPRV => "0488ade4",
     ];
 
     /**

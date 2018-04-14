@@ -27,6 +27,10 @@ class Provider
     {
         return \BitWasp\Bitcoin\Network\NetworkFactory::bitcoin();
     }
+	
+	public function sigHash(){
+		return  \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash::ALL;
+	}
 
     /**
      * @return NetworkInterface
@@ -91,7 +95,10 @@ class Provider
 			throw new \Exception ($err);
 		}
 		$json = preg_replace('/\: *([0-9]+\.?[0-9e+\-]*)/', ':"\\1"', $response->getBody());
-        return  json_decode($json);
+		$obj = json_decode($json);
+		if(is_object($obj))
+		$obj->raw = $json;
+        return  $obj;
 	}
 	
 	private function throttle(){ // throttle http api requests 5 per second

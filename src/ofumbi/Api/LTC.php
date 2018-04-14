@@ -3,46 +3,51 @@ namespace ofumbi\Api;
 use ofumbi\Api\Providers\Insight;
 use ofumbi\Api\Providers\Chainso;
 use Graze\GuzzleHttp\JsonRpc\Client;
-
+use ofumbi\Api\ApiInterface;
 class LTC implements ApiInterface
 {
+	public $bip44index = '2';
 	private  $litecoin ,  
 			 $trezor1, 
 			 $trezor2, 
 			 $trezor3,
 			 $chainso, 
-			 $coinspace;
+			 $coinspace,
+			 $net;
 
-    public function __construct( ) // well use varoius api to handle rate limmiting
+    public function __construct(  ) 
     {
+		$this->net = $this->network();
 		
-		$this->litecoin = new Insight('https://insight.litecore.io/api');
-		$this->trezor1 = new Insight('https://ltc-bitcore1.trezor.io/api');  //listunspent
-		$this->trezor2 = new Insight('https://ltc-bitcore2.trezor.io/api');	// balance 
-		$this->trezor3 = new Insight('https://ltc-bitcore3.trezor.io/api');  // pushTx
+		$this->litecoin = new Insight('https://insight.litecore.io/api/');
+		$this->trezor1 = new Insight('https://ltc-bitcore1.trezor.io/api/');  //listunspent
+		$this->trezor2 = new Insight('https://ltc-bitcore2.trezor.io/api/');	// balance 
+		$this->trezor3 = new Insight('https://ltc-bitcore3.trezor.io/api/');  // pushTx
 		$this->chainso = new  Chainso('LTC');
-		$this->coinspace = new Insight('https://ltc.coin.space/api');  //get Block
+		$this->coinspace = new Insight('https://ltc.coin.space/api/');  //get Block
 	}
+	public function getNetwork(){
+		return $this->net;
+	}
+	
 	 /**
      * @return NetworkInterface
      * @throws \Exception
      */
-    public static function network()
+    private function network()
     {
         return \BitWasp\Bitcoin\Network\NetworkFactory::litecoin();
+		//return \BitWasp\Bitcoin\Network\NetworkFactory::litecoinTestnet();
     }
-
-    /**
-     * @return NetworkInterface
-     * @throws \Exception
-     */
-    public static function testnet()
-    {
-        return \BitWasp\Bitcoin\Network\NetworkFactory::litecoinTestnet();
-    }
-	//chainso
+	
+	public function sigHash(){
+		return  \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash::ALL;
+	}
+	
+	
+    
 	public function addressTx(array $addresses=[], $blocks = []){
-		return $this->chainso->addressTx($addresses, $blocks);
+		return $this->trezor3->addressTx($addresses, $blocks);
 	}
 	
 	// litecoin
@@ -52,7 +57,7 @@ class LTC implements ApiInterface
 	
 	//trezor
 	public function getBalance($minConf, array $addresses=[]){
-		$this->trezor2->getBalance($minConf, $addresses );
+		return $this->trezor2->getBalance($minConf, $addresses );
 	}
 	
 	public function sendrawtransaction( $hexRawTx ){
@@ -76,7 +81,7 @@ class LTC implements ApiInterface
 	}
 	
 	public function feePerKB(){
-		return $this->blockexplorer->feePerKB();;
+		return $this->coinspace->feePerKB();;
 	}
 	
 	//

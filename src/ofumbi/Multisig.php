@@ -1,9 +1,11 @@
 <?php
 namespace ofumbi;
 use ofumbi\Address;
+use  BitWasp\Bitcoin\Crypto\EcAdapter\Impl\Secp256k1\Key\PrivateKey;
 class Multisig{
 	
-	
+	private $index = NULL;
+	public $api = NULL;
 	/* Bitcoin network*/
 	private $network;
 	/* Wallet  bip44 format*/
@@ -20,39 +22,41 @@ class Multisig{
 	/* Wallet  Master Private Key*/
 	
 	
-	function __construct( \Ofumbi\Api $Api, string $bip44index = 0 ,\ofumbi\HD $hd1 = NULL,\ofumbi\HD $hd3 = NULL, \ofumbi\HD $hd3 = NULL){
-		$this->network = $Api->network;
-		$this->bip44 = "m/44'/".$bip44index."'/0'";
+	function __construct( \ofumbi\HD $hd1 = NULL,\ofumbi\HD $hd2 = NULL, \ofumbi\HD $hd3 = NULL){
+		$this->network = $hd1->network;
+		$this->bip44 = "m/44'/".$hd1->bip44."'/0'";
 		$this->HD1 = $hd1;
 		$this->HD2 = $hd2;
 		$this->HD3 = $hd3;
-		$this->Api = $Api;
+		$this->api = $hd1->api;
 	}
 	
-	public function setHD( \ofumbi\HD $hd , $index = 1){
-		if($index == 1)
+	public function setHD1( \ofumbi\HD $hd){
 		$this->HD1 = $hd;
-		if($index == 2)
+		return $this;
+	}
+	public function setHD2( \ofumbi\HD $hd){
 		$this->HD2 = $hd;
-		if($index == 3)
+		return $this;
+	}
+	public function setHD3( \ofumbi\HD $hd){
 		$this->HD3 = $hd;
 		return $this;
 	}
-	
-	public function getAddress($index, $update = false){
-		return new \ofumbi\Address($this->derive($index)->xpub->getAddress(), $this , $update);	
+	public function getAddress($update = false){
+		return new \ofumbi\Address(clone $this , $update);	
 	}
 	
 	public function deriveAddress($index){
-		return  $this->derive($index)->address;
+		return  $this->at($index)->address;
 	}
 	
 	public function deriveChangeAddress($index){
-		return $this->getAddress('1/'.$index);
+		return $this->deriveAddress('1/'.$index);
 	}
 	
-	protected function derive($index){
-		$multisig = [ $this->HD1->xpub,$this->HD2->xpub,$this->HD3->xpub];
+	public function at($index){
+		$multisig = [ $this->HD1->getXprivKey(),$this->HD2->getXprivKey(),$this->HD3->getXpubKey()];
 		$sequences = new \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeySequence();
 		$hd = new \BitWasp\Bitcoin\Key\Deterministic\MultisigHD(2, $this->bip44, self::sortHDKeys($multisig), $sequences, true);
 		if(strpos($index,'/')===false){
@@ -60,14 +64,27 @@ class Multisig{
 		}
 		$this->xpub = $hd->derivePath($index);
 		$this->path = $index;
+		$this->index = $index;
 		$this->HDpath = $this->HD1->bip44; // standard
-		$this->redeemscript = $xpub->getRedeemScript();
-		$this->address = $xpub->getAddress()->getAddress();
-		$this->privateKey1 = $this->HD1->derive($index)->xprivKey;
-		$this->privateKey2 = $this->HD2->derive($index)->xprivKey;
-		$this->privateKeys = self::sortHDKeys([$this->privateKey1 ,$this->privateKey2 ]);
+		$this->redeemscript = $this->xpub->getRedeemScript();
+		$this->address = $this->xpub->getAddress($this->network)->getAddress($this->network);
 		return  $this;
-			
+	}
+	
+	public function get($index){
+		$multisig = [ $this->HD1->getXpubKey(),$this->HD2->getXpubKey(),$this->HD3->getXpubKey()];
+		$sequences = new \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeySequence();
+		$hd = new \BitWasp\Bitcoin\Key\Deterministic\MultisigHD(2, $this->bip44, self::sortHDKeys($multisig), $sequences, true);
+		if(strpos($index,'/')===false){
+			$index = '0/'.$index;
+		}
+		$this->xpub = $hd->derivePath($index);
+		$this->path = $index;
+		$this->index = $index;
+		$this->HDpath = $this->HD1->bip44; // standard
+		$this->redeemscript = $this->xpub->getRedeemScript();
+		$this->address = $this->xpub->getAddress($this->network)->getAddress($this->network);
+		return  $this;
 	}
 	
 	private static  function sortHDKeys(array $keys) {

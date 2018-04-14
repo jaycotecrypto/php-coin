@@ -3,46 +3,53 @@ namespace ofumbi\Api;
 use ofumbi\Api\Providers\Insight;
 use ofumbi\Api\Providers\Chainso;
 use Graze\GuzzleHttp\JsonRpc\Client;
-
+use ofumbi\Api\ApiInterface;
 class DASH implements ApiInterface
 {
+	public $bip44index = '5';
 	private  $masternode ,  // api providers
 			 $dash ,  
 			 $trezor1, 
 			 $trezor2, 
 			 $trezor3,
 			 $chainso, 
-			 $siampm;
+			 $siampm,
+			 $net;
 
-    public function __construct( ) // well use varoius api to handle rate limmiting
+    public function __construct(  ) 
     {
+		$this->net = $this->network();
 		$this->chainso = new  Chainso('DASH');
-		$this->dash = new Insight('https://insight.dash.org/api');
-		$this->siampm = new Insight('https://insight.dash.siampm.com/api'); 
-		$this->masternode = new Insight('http://insight.masternode.io:3000/api'); 
-		$this->trezor1 = new Insight('https://dash-bitcore1.trezor.io/api');   
-		$this->trezor2 = new Insight('https://dash-bitcore2.trezor.io/api');	
-		$this->trezor3 = new Insight('https://dash-bitcore3.trezor.io/api'); 
+		$this->dash = new Insight('https://insight.dash.org/api/');
+		$this->siampm = new Insight('https://insight.dash.siampm.com/api/'); 
+		$this->masternode = new Insight('http://insight.masternode.io:3000/api/'); 
+		$this->trezor1 = new Insight('https://dash-bitcore1.trezor.io/api/');   
+		$this->trezor2 = new Insight('https://dash-bitcore2.trezor.io/api/');	
+		$this->trezor3 = new Insight('https://dash-bitcore3.trezor.io/api/'); 
 		
 	}
+	public function getNetwork(){
+		return $this->net;
+	}
+	
+	public function sigHash(){
+		return  \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash::ALL;
+	}
+	
 	
 	 /**
      * @return NetworkInterface
      * @throws \Exception
      */
-    public static function network()
+    private function network()
     {
         return \BitWasp\Bitcoin\Network\NetworkFactory::dash();
+		//return \BitWasp\Bitcoin\Network\NetworkFactory::dashTestnet();
     }
-
-    /**
-     * @return NetworkInterface
-     * @throws \Exception
-     */
-    public static function testnet()
-    {
-        return \BitWasp\Bitcoin\Network\NetworkFactory::dashTestnet();
-    }
+	
+	
+	
+   
 	//chainso
 	public function addressTx(array $addresses=[], $blocks = []){
 		return $this->masternode->addressTx($addresses, $blocks);
@@ -55,7 +62,7 @@ class DASH implements ApiInterface
 	
 	//trezor
 	public function getBalance($minConf, array $addresses=[]){
-		$this->trezor2->getBalance($minConf, $addresses );
+		return $this->trezor2->getBalance($minConf, $addresses );
 	}
 	
 	public function sendrawtransaction( $hexRawTx ){

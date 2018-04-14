@@ -4,25 +4,34 @@ use ofumbi\Api\Provider;
 use \BitWasp\Bitcoin\Network\Network;
 use phpseclib\Math\BigInteger;
 use ofumbi\Api\ApiInterface;
-Tightenco\Collect\Support\Collection;
+use Tightenco\Collect\Support\Collection;
 
 class Api 
 {
     public $network;
     public $provider;
-	public $minConf = 6;
+	public $minconf = 6;
+	public $minDust = 600;
 	public $max = 999999;
 
-    public function __construct(Network $network, ApiInterface $provider)
+    public function __construct( ApiInterface $provider)
     {
         $this->provider = $provider;
-		$this->network = $network;
+		$this->network =  $provider->getNetwork();
         
     }
+	
+	public function sigHash( ){
+		return $this->provider->sigHash();
+	}
 	public function toBTC($satoshi)
     {
         return bcdiv((int)(string)$satoshi, 100000000, 8);
     }
+	
+	public function addressTx(array $addresses=[], $blocks = []){
+		return $this->provider->addressTx($addresses, $blocks);
+	}
 	
 	public  function toSatoshi($btc)
     {
@@ -36,8 +45,10 @@ class Api
 			return $address->map(function($add , $id)use($utxos){
 				$ok = $utxos->get($add->address);
 				if(empty($ok )) return NULL;
+				$bal = $ok->sum('amount');
 				foreach ($ok as $utxo ){
-					if( $utxo->confimations > $this->minconf)
+					$utxo->balance = $bal;
+					if( $utxo->confirmations > $this->minconf)
 					$add->utxos[] = new UTXO($add,$utxo);
 				}
 				return $add;
