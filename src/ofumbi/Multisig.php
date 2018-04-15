@@ -24,7 +24,7 @@ class Multisig{
 	
 	function __construct( \ofumbi\HD $hd1 = NULL,\ofumbi\HD $hd2 = NULL, \ofumbi\HD $hd3 = NULL){
 		$this->network = $hd1->network;
-		$this->bip44 = "m/44'/".$hd1->bip44."'/0'";
+		$this->bip44 = $hd1->bip44;
 		$this->HD1 = $hd1;
 		$this->HD2 = $hd2;
 		$this->HD3 = $hd3;

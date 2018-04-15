@@ -22,8 +22,8 @@ class Insight extends Provider implements ApiInterface
 
 	}
 	
-	public function addressTx(array $addresses=[], $blocks = []){
-		$adrs = $addresses instanceof Illuminate\Support\Collection? $addresses->pluck('addresss'):$addresses;
+	public function addressTx(Illuminate\Support\Collection $addresses , $blocks = []){
+		$adrs =   $addresses->pluck('address');
 		$endpoint = "addrs/".implode(',',$adrs)."/txs";
 		$from = 0;
 		$to = 50;
@@ -48,34 +48,44 @@ class Insight extends Provider implements ApiInterface
 			$all_to = $vout->pluck('scriptPubKey')->pluck('addresses')->collapse();
 			$mine_from = $all_from->intersect($adrs);
 			$mine_to = $all_to->intersect($adrs);
-			if($mine_from->count()){
-				$btx = new \ofumbi\BTX;
-				$btx->from = $mine_from;
-				$btx->type = 'send'; 
-				$btx->to = $all_to;
-				$btx->hash = $tx->txid ;
-				$btx->fee = $this->toSatoshi($tx->fees);
- 				$btx->amount = $vin->whereIn('add', $mine_from)->sum('valueSat');
- 				$btx->confirmations = $tx->confirmations;
-				$btx->blockHeight = $tx->blockheight;
-				$valid[] = $btx;
-			}
+			$src = $addresses->groupBy('address');
+			
+			/*if($all_from->count()){
+				foreach($mine_from as $address){
+					if(!isset($src[$address]))continue;
+					$btx = new \ofumbi\BTX;
+					$btx->from = $address;
+					$btx->type = 'send'; 
+					$btx->to = $all_to->first();
+					$btx->hash = $tx->txid ;
+					$btx->fee = $this->toSatoshi($tx->fees);
+					$btx->amount = $vin->whereIn('add', $mine_from)->sum('valueSat');
+					$btx->confirmations = $tx->confirmations;
+					$btx->blockHeight = $tx->blockheight;
+					$btx->address = $src[$address];
+					$valid[] = $btx;
+				}
+			}*/
 			
 			if($mine_to->count()){
 				$vouts = $vout->reject(function($val, $key)use($mine_to){
 						return $mine_to->intersect($val->scriptPubKey->addresses)->count() < 1;
 				});
 				foreach($vouts as $mine){
-					$btx = new \ofumbi\BTX;
-					$btx->from = $all_from;
-					$btx->type = 'receive'; 
-					$btx->to = $mine->scriptPubKey->addresses;
-					$btx->hash = $tx->txid ;
-					$btx->fee = $this->toSatoshi($tx->fees);
-					$btx->confirmations = $tx->confirmations;
-					$btx->blockHeight = $tx->blockheight;
-					$btx->amount =  $this->toSatoshi($mine->value);
-					$valid[] = $btx;
+					foreach($mine->scriptPubKey->addresses as $ok){
+						if(!isset($src[$ok]))continue;
+						$btx = new \ofumbi\BTX;
+						$btx->from = collect($all_from)->first();
+						$btx->type = 'receive'; 
+						$btx->to = $ok;
+						$btx->hash = $tx->txid ;
+						$btx->fee = $this->toSatoshi($tx->fees);
+						$btx->confirmations = $tx->confirmations;
+						$btx->blockHeight = $tx->blockheight;
+						$btx->amount =  $this->toSatoshi($mine->value);
+						$btx->address = $src[$ok];
+						$valid[] = $btx;
+					}
 				}
 			}
 	

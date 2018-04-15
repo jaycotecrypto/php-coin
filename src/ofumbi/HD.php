@@ -19,8 +19,10 @@ class HD{
 	private $xpub; 
 	/* Wallet Password*/
 	private $password; 
-	/* Wallet  Master Private Key*/
+	/* Wallet  Master ext Private Key*/
 	private $master_xpriv;
+	/* Wallet  Master Private Key*/
+	private $master_xprivKey;
 	/* Wallet  Master Private Key*/
 	private $mnemonic;
 	/* Wallet  Master Private Key*/
@@ -60,6 +62,11 @@ class HD{
 	function getMasterXpriv(){
 		if(is_null($this->master_xpriv))throw new Exception('master_xpriv not set');
 		return $this->master_xpriv;
+	}
+	
+	function getMasterXprivKey(){
+		if(is_null($this->master_xprivKey))throw new Exception('master_xpriv Key not set');
+		return $this->master_xprivKey;
 	}
 	
 	function getPassword(){
@@ -104,7 +111,9 @@ class HD{
 	public function masterSeed($master){
 		//Master xpriv
 		$master = \BitWasp\Bitcoin\Key\Deterministic\HierarchicalKeyFactory::fromExtended($master,$this->network);
+		$this->master_xprivKey = $master;
 		$master_xpriv = $master->toExtendedPrivateKey($this->network);
+		$this->master_xprivKey = $master;
 		$this->master_xpriv = $master_xpriv;
 		$master_xpub = $master->toExtendedPublicKey($this->network); // path is master''
 		$this->master_xpub  = $master_xpub;

@@ -1,6 +1,6 @@
 <?php
 namespace ofumbi;
-use Illuminate\Support\Collection;
+use \Illuminate\Support\Collection;
 use \BitWasp\Bitcoin\Address\AddressCreator;
 
 class BitcoinTx
@@ -13,11 +13,12 @@ class BitcoinTx
 	public $txHash;
 	public $coin;
 	public $api;
+	public $utxos;
 	public $info;
 	public $fees;
 	public $changeAddress;
 	
-    public function __construct( Collection $to , Collection $from , \ofumbi\Api $api, $changeAddress, int $fees = 0)
+    public function __construct( Collection $to , Collection $from , \ofumbi\Api $api, $changeAddress, $fees = "medium")
     {
 		$this->to = $to ;
 		$this->api = $api ;
@@ -70,7 +71,7 @@ class BitcoinTx
 		die(var_dump($rawtx->getHex(), $this->etx->getHex()));
 		try{
 			$finished = $this->api->sendrawtransaction($rawtx->getHex());
-		}catch(Exception $e ){
+		}catch(\Exception $e ){
 			throw $e;
 		}
        $this->txHash =$finished ;
@@ -145,7 +146,7 @@ class BitcoinTx
 				}catch(\Exception $e){
 				}
 			}
-			if (count($privateKeys) < 2 ) throw new Exception('Address '.$utxo->address->add.' requires at least two private Keys');
+			if (count($privateKeys) < 2 ) throw new \Exception('Address '.$utxo->address->add.' requires at least two private Keys');
 			$signInfo[] = new SignInfo($privateKeys, new \BitWasp\Bitcoin\Transaction\TransactionOutput($utxo->value, $utxo->scriptPubKey),$utxo->address->multisig->redeemscript);
 			
 			$TX->spendOutPoint(new \BitWasp\Bitcoin\Transaction\OutPoint(\BitWasp\Buffertools\Buffer::hex($utxo->txId), $utxo->index), $utxo->scriptPubKey);
