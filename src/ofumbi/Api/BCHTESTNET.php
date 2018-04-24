@@ -7,7 +7,7 @@ use ofumbi\Api\ApiInterface;
 use \BitWasp\Bitcoin\Transaction\SignatureHash\SigHash;
 use \Btccom\BitcoinCash\Transaction\SignatureHash\SigHash as BchSigHash;
 use \Btccom\BitcoinCash\Network\Networks\BitcoinCashTestnet;
-class BCH implements ApiInterface
+class BCHTESTNET implements ApiInterface
 {
 	public $bip44index = '145';
 	private  $blockdozer ,  // api providers
